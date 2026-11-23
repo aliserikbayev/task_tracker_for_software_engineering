@@ -1,4 +1,4 @@
-"""Command-line interface.  Usage: python cli.py --help"""
+"""Command-line interface. Usage: python cli.py --help"""
 import argparse
 import sys
 
@@ -27,9 +27,8 @@ def main(argv=None) -> int:
     sub.add_parser("stats", help="show progress")
 
     args = parser.parse_args(argv)
-    tracker = TaskTracker.load(DATA_FILE)
-
     try:
+        tracker = TaskTracker.load(DATA_FILE)
         if args.cmd == "add":
             t = tracker.add(args.title, args.priority)
             print(f"Added #{t.id}: {t.title} [{t.priority}]")
@@ -45,11 +44,14 @@ def main(argv=None) -> int:
         elif args.cmd == "stats":
             s = tracker.stats()
             print(f"{s['done']}/{s['total']} done ({s['percent_done']}%), {s['open']} open")
-    except (ValueError, KeyError) as e:
-        print(f"Error: {e.args[0]}", file=sys.stderr)
+
+        if args.cmd in {"add", "done", "remove"}:
+            tracker.save(DATA_FILE)
+    except (ValueError, KeyError, OSError) as e:
+        message = e.args[0] if e.args else str(e)
+        print(f"Error: {message}", file=sys.stderr)
         return 1
 
-    tracker.save(DATA_FILE)
     return 0
 
 
